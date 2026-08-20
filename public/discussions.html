@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0b0b10">
+  <title>Discussions — KILLUA OFFICIAL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/style.css">
+</head>
+<body class="discussion-page"><div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+<header class="navbar"><a class="brand" href="/"><span class="brand-mark">K</span><span>KILLUA <b>OFFICIAL</b></span></a><nav id="nav"><a href="/">Accueil</a><a class="active" href="/discussions.html">Discussions</a><a href="/#projects">Projets</a><a href="/#contact">Contact</a></nav><button class="menu-btn" id="menuBtn" aria-label="Ouvrir le menu">☰</button></header>
+<main class="container discussion-main">
+  <div class="discussion-head"><div><p class="eyebrow">KILLUA COMMUNITY</p><h1>Discussions</h1><p>Un espace simple pour échanger autour du développement, des projets et de la communauté KILLUA.</p></div><a class="btn primary" href="https://wa.me/243906905464" target="_blank" rel="noopener">💬 Me parler sur WhatsApp</a></div>
+  <div class="discussion-layout">
+    <aside class="community-sidebar glass"><div class="server-title"><span class="brand-mark small">K</span><div><b>KILLUA COMMUNITY</b><small>ESPACE OFFICIEL</small></div></div><button class="channel active"># général <span>24</span></button><button class="channel"># développement <span>8</span></button><button class="channel"># projets <span>12</span></button><button class="channel"># idées <span>5</span></button><div class="sidebar-links"><a href="https://t.me/cabrinokillua" target="_blank" rel="noopener">🔵 Telegram</a><a href="https://whatsapp.com/channel/0029VbCHB1eDjiOUGG4OCS2t" target="_blank" rel="noopener">🟢 WhatsApp</a><a href="https://www.youtube.com/@CabrinoNsala0" target="_blank" rel="noopener">🔴 YouTube</a></div></aside>
+    <section class="feed"><div class="feed-toolbar glass"><div><b>Discussion générale</b><small>Partage tes idées avec la communauté</small></div><span class="live-pill"><i></i> En ligne</span></div>
+      <form id="discussionForm" class="composer glass"><input id="discussionName" maxlength="40" placeholder="Ton nom" required><textarea id="discussionMessage" maxlength="500" rows="3" placeholder="Commence une discussion..." required></textarea><div class="composer-bottom"><small>Les messages de cette démo sont enregistrés dans ton navigateur.</small><button class="btn primary" type="submit">Publier</button></div></form>
+      <div id="posts" class="posts"></div>
+    </section>
+  </div>
+</main>
+<footer><div class="container footer-inner"><a class="brand" href="/"><span class="brand-mark">K</span><span>KILLUA <b>OFFICIAL</b></span></a><span>© <span id="year"></span> KILLUA OFFICIAL</span><a href="/">Retour au portfolio →</a></div></footer>
+<script src="/script.js"></script>
+<script>
+const seedPosts=[
+  {name:"KILLUA",message:"Bienvenue dans KILLUA COMMUNITY 🚀",created_at:new Date().toISOString()},
+  {name:"KILLUA OFFICIAL",message:"Les nouveaux projets et bots seront ajoutés progressivement.",created_at:new Date().toISOString()}
+];
+const posts=document.getElementById("posts");
+const form=document.getElementById("discussionForm");
+const nameInput=document.getElementById("discussionName");
+const messageInput=document.getElementById("discussionMessage");
+
+function escapeHtml(v){
+  return String(v).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c]));
+}
+function formatDate(v){
+  const d=new Date(v);
+  return Number.isNaN(d.getTime()) ? "À l’instant" :
+    d.toLocaleString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+}
+function render(list){
+  posts.innerHTML="";
+  list.forEach(p=>{
+    const el=document.createElement("article");
+    el.className="post glass";
+    el.innerHTML=`
+      <div class="post-avatar">${escapeHtml((p.name||"U").charAt(0).toUpperCase())}</div>
+      <div class="post-content">
+        <div class="post-author">
+          <b>${escapeHtml(p.name||"Utilisateur")}</b>
+          <span>${formatDate(p.created_at)}</span>
+        </div>
+        <p>${escapeHtml(p.message||"")}</p>
+      </div>`;
+    posts.appendChild(el);
+  });
+}
+async function loadPosts(){
+  try{
+    const r=await fetch("/api/discussions");
+    if(!r.ok) throw new Error();
+    const data=await r.json();
+    render((data.posts||[]).length ? data.posts : seedPosts);
+  }catch{
+    render(seedPosts);
+  }
+}
+form.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const name=nameInput.value.trim();
+  const message=messageInput.value.trim();
+  if(!name||!message) return;
+  const button=form.querySelector("button[type=submit]");
+  button.disabled=true;
+  button.textContent="Publication…";
+  try{
+    const r=await fetch("/api/discussions",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name,message})
+    });
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.message||"Erreur");
+    form.reset();
+    await loadPosts();
+  }catch(err){
+    alert(err.message||"Impossible de publier.");
+  }finally{
+    button.disabled=false;
+    button.textContent="Publier";
+  }
+});
+loadPosts();
+setInterval(loadPosts,15000);
+</script></body>
