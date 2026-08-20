@@ -1,0 +1,10 @@
+{
+  "name": "killua-official",
+  "version": "4.0.0",
+  "private": true,
+  "description": "KILLUA OFFICIAL — portfolio et communauté",
+  "scripts": {
+    "dev": "npx serve public",
+    "start": "npx serve public"
+  }
+}
